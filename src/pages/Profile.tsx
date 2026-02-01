@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  User,
-  Mail,
-  Calendar,
-  CreditCard,
-  Shield,
-  ChevronRight,
-  LogOut,
-  HelpCircle,
-  FileText,
-  Camera,
+import { 
+  Shield, 
+  ArrowLeft, 
+  ChevronRight, 
+  User, 
+  CreditCard, 
+  Clock,
+  Edit3,
+  Home,
+  QrCode,
 } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -24,171 +24,184 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = () => {
+    setShowLogoutDialog(false);
     toast.success("Déconnexion réussie");
     navigate("/login");
   };
 
   return (
-    <MobileLayout>
-      {/* Header with profile info */}
-      <div className="header-gradient px-4 pt-8 pb-16 safe-top text-center">
-        <div className="relative inline-block animate-scale-in">
-          <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto border-4 border-white/30">
-            <User className="w-12 h-12 text-white" />
-          </div>
-          <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
-            <Camera className="w-4 h-4 text-accent-foreground" />
-          </button>
-        </div>
-        <h1 className="text-xl font-bold text-white mt-4 animate-fade-in">
-          Utilisateur Test
-        </h1>
-        <p className="text-white/80 text-sm animate-fade-in">
-          utilisateur@gmail.com
-        </p>
-      </div>
-
-      {/* Profile sections */}
-      <div className="px-4 -mt-8 pb-6">
-        {/* Personal Info Card */}
-        <div className="bg-card rounded-2xl shadow-lg overflow-hidden mb-4 animate-slide-up">
-          <div className="px-4 py-3 bg-secondary/50 border-b border-border">
-            <h2 className="font-semibold text-foreground text-sm uppercase tracking-wide">
-              Informations Personnelles
-            </h2>
-          </div>
-          <div className="divide-y divide-border">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Date de naissance</p>
-                <p className="font-medium text-foreground">15 Mars 1990</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Numéro CNI</p>
-                <p className="font-medium text-foreground">123456789012</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Mail className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">utilisateur@gmail.com</p>
-              </div>
-            </div>
+    <MobileLayout showNav={false}>
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Header */}
+        <div className="header-gradient px-4 pt-6 pb-16 safe-top">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <h1 className="text-white font-bold">Profil</h1>
+            <div className="w-10" />
           </div>
         </div>
 
-        {/* Account Settings Card */}
-        <div className="bg-card rounded-2xl shadow-lg overflow-hidden mb-4 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <div className="px-4 py-3 bg-secondary/50 border-b border-border">
-            <h2 className="font-semibold text-foreground text-sm uppercase tracking-wide">
-              Paramètres du Compte
-            </h2>
-          </div>
-          <div className="divide-y divide-border">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-success" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground text-sm">
-                    Authentification 2FA
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Protection renforcée
-                  </p>
-                </div>
+        {/* Profile Card */}
+        <div className="px-4 -mt-12">
+          <div className="bg-card rounded-xl border border-border shadow-lg p-6 text-center relative animate-slide-up">
+            {/* Avatar */}
+            <div className="relative inline-block mb-4">
+              <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center border-4 border-card">
+                <User className="w-10 h-10 text-muted-foreground" />
               </div>
-              <Switch
-                checked={twoFactorEnabled}
+              <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md">
+                <Edit3 className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <h2 className="text-lg font-bold text-foreground">Utilisateur Test</h2>
+            <p className="text-sm text-muted-foreground">utilisateur.test@email.com</p>
+          </div>
+        </div>
+
+        {/* Personal Information Section */}
+        <div className="px-4 mt-6">
+          <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+            Informations Personnelles
+          </h3>
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors border-b border-border">
+              <span className="text-sm text-foreground">Date Complète</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
+              <span className="text-sm text-foreground">Numéro CNI</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
+        {/* Account Settings Section */}
+        <div className="px-4 mt-6">
+          <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+            Paramètres du Compte
+          </h3>
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <span className="text-sm text-foreground">Authentification à deux facteurs</span>
+              <Switch 
+                checked={twoFactorEnabled} 
                 onCheckedChange={setTwoFactorEnabled}
               />
             </div>
-            <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-info" />
-                </div>
-                <span className="font-medium text-foreground text-sm">
-                  Changer le mot de passe
-                </span>
-              </div>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors border-b border-border">
+              <span className="text-sm text-foreground">Changer le Mot Passe</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors border-b border-border">
+              <span className="text-sm text-foreground">Conditions | Mot Support</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
+              <span className="text-sm text-foreground">Politiques Générales</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
 
-        {/* Help & Policies Card */}
-        <div className="bg-card rounded-2xl shadow-lg overflow-hidden mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          <div className="divide-y divide-border">
-            <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
-                  <HelpCircle className="w-5 h-5 text-warning" />
-                </div>
-                <span className="font-medium text-foreground text-sm">
-                  Aide & Support
-                </span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <span className="font-medium text-foreground text-sm">
-                  Conditions d'utilisation
-                </span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
+        {/* Bottom Navigation */}
+        <div className="mt-auto">
+          <div className="px-4 py-4 border-t border-border bg-card">
+            <div className="flex items-center justify-around mb-4">
+              <button 
+                onClick={() => navigate("/")}
+                className="flex flex-col items-center gap-1 text-primary"
+              >
+                <Home className="w-5 h-5" />
+                <span className="text-xs font-medium">ACCUEIL</span>
+              </button>
+              <button 
+                onClick={() => navigate("/scanner")}
+                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <QrCode className="w-5 h-5" />
+                <span className="text-xs font-medium">SCANNER</span>
+              </button>
+              <button 
+                onClick={() => navigate("/payments")}
+                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <CreditCard className="w-5 h-5" />
+                <span className="text-xs font-medium">PAIEMENT</span>
+              </button>
+              <button 
+                onClick={() => navigate("/payments")}
+                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Clock className="w-5 h-5" />
+                <span className="text-xs font-medium">HISTORIQUE</span>
+              </button>
+              <button className="flex flex-col items-center gap-1 text-muted-foreground">
+                <User className="w-5 h-5" />
+                <span className="text-xs font-medium">MON PROFIL</span>
+              </button>
+            </div>
+
+            {/* Logout Button */}
+            <Button 
+              onClick={() => setShowLogoutDialog(true)}
+              variant="destructive"
+              className="w-full h-12 font-semibold"
+            >
+              SE DÉCONNECTER
+            </Button>
           </div>
         </div>
 
-        {/* Logout Button */}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button className="w-full bg-destructive/10 text-destructive font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <LogOut className="w-5 h-5" />
-              Se déconnecter
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="max-w-xs mx-auto rounded-2xl">
+        {/* Logout Confirmation Dialog */}
+        <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <AlertDialogContent className="max-w-xs mx-auto rounded-xl">
+            <div className="header-gradient -mx-6 -mt-6 px-6 py-4 rounded-t-xl mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-accent" />
+                </div>
+                <div>
+                  <span className="text-white font-bold text-sm">CDAS</span>
+                  <p className="text-white/70 text-[10px]">CAMEROON DIPLOMA AUTHENTICATION SYSTEM</p>
+                </div>
+              </div>
+            </div>
             <AlertDialogHeader>
-              <AlertDialogTitle>Se déconnecter?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Êtes-vous sûr de vouloir vous déconnecter de votre compte?
+              <AlertDialogTitle className="text-center text-xl">Déconnexion</AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
+                Êtes-vous sûr de vouloir vous déconnecter de votre compte ?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="flex-row gap-3">
-              <AlertDialogCancel className="flex-1 m-0">Annuler</AlertDialogCancel>
-              <AlertDialogAction
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+              <AlertDialogAction 
                 onClick={handleLogout}
-                className="flex-1 bg-destructive hover:bg-destructive/90"
+                className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Se déconnecter
+                SE DÉCONNECTER
               </AlertDialogAction>
+              <AlertDialogCancel className="w-full">
+                Annuler
+              </AlertDialogCancel>
             </AlertDialogFooter>
+            <div className="text-center mt-2">
+              <button className="text-xs text-primary hover:underline">
+                Aide & Support
+              </button>
+            </div>
           </AlertDialogContent>
         </AlertDialog>
       </div>
