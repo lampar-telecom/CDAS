@@ -67,8 +67,8 @@ export default function Profile() {
               </button>
             </div>
             
-            <h2 className="text-lg font-bold text-foreground">Utilisateur Test</h2>
-            <p className="text-sm text-muted-foreground">utilisateur.test@email.com</p>
+            <h2 className="text-lg font-bold text-foreground">Mr Python</h2>
+            <p className="text-sm text-muted-foreground">mrpython@email.com</p>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ export default function Profile() {
             </AlertDialogFooter>
             <div className="text-center mt-2">
               <button className="text-xs text-primary hover:underline">
-                Aide & Support
+                Aide & Support 
               </button>
             </div>
           </AlertDialogContent>
