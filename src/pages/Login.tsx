@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Shield, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,61 +33,61 @@ export default function Login() {
   };
 
   return (
-    <div className="mobile-container min-h-screen flex flex-col">
-      {/* Header with gradient */}
-      <div className="header-gradient px-6 pt-12 pb-16 text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm mb-4 animate-scale-in">
-          <Shield className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <div className="header-gradient px-6 pt-12 pb-8 safe-top">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-accent" />
+          </div>
+          <span className="text-white font-bold text-lg">CDAS</span>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2 animate-fade-in">
-          CDAS
-        </h1>
-        <p className="text-white/80 text-sm animate-fade-in">
-          Système de Vérification des Diplômes
+        <p className="text-white/80 text-xs uppercase tracking-wider">
+          CAMEROON DIPLOMA AUTHENTICATION SYSTEM
         </p>
       </div>
 
-      {/* Login form */}
-      <div className="flex-1 px-6 -mt-8">
-        <div className="bg-card rounded-2xl shadow-lg p-6 animate-slide-up">
-          <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
+      {/* Login Form */}
+      <div className="flex-1 px-6 pt-8">
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-6 animate-slide-up">
+          <h1 className="text-2xl font-bold text-foreground text-center mb-6">
             Connexion
-          </h2>
+          </h1>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
                 Adresse e-mail
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type="email"
-                  placeholder="exemple@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 input-focus"
+                  placeholder="votre@email.com"
+                  className="h-12 rounded-xl border-input bg-background pl-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
                 Mot de passe
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 input-focus"
+                  placeholder="••••••••"
+                  className="h-12 rounded-xl border-input bg-background pl-10 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -98,50 +98,49 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm text-muted-foreground cursor-pointer"
-                >
-                  Se souvenir de moi
-                </label>
-              </div>
+            <div className="flex items-center justify-end">
               <button
                 type="button"
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-primary hover:underline font-medium"
               >
-                Mot de passe oublié?
+                Mot passe oublié ?
               </button>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold"
+              className="w-full h-12 bg-primary text-primary-foreground font-semibold rounded-xl"
               disabled={isLoading}
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? "Connexion..." : "SE CONNECTER"}
             </Button>
+
+            <div className="flex items-center justify-center gap-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              />
+              <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                Se souvenir de moi
+              </label>
+            </div>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Pas encore de compte?{" "}
-              <button className="text-primary font-medium hover:underline">
+              Pas encore de compte ?{" "}
+              <button className="text-primary font-semibold hover:underline">
                 S'inscrire
               </button>
             </p>
           </div>
         </div>
 
-        {/* Help link */}
-        <div className="text-center mt-6 pb-8">
-          <button className="text-sm text-muted-foreground hover:text-primary transition-colors">
+        {/* Help Link */}
+        <div className="mt-6 text-center pb-8">
+          <button className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <HelpCircle className="w-4 h-4" />
             Aide & Support
           </button>
         </div>

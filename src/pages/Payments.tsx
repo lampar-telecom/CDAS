@@ -1,80 +1,81 @@
 import { useState } from "react";
-import { ChevronDown, CheckCircle2, XCircle, Clock, Filter } from "lucide-react";
+import { Shield, CheckCircle2, XCircle, Clock, ChevronRight } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
+import { CircularProgress } from "@/components/ui/circular-progress";
 import { cn } from "@/lib/utils";
 
 interface Payment {
   id: string;
   title: string;
+  date: string;
+  time: string;
   amount: number;
   status: "success" | "expired" | "pending" | "free";
-  date: string;
 }
 
 const payments: Payment[] = [
   {
     id: "1",
     title: "Vérification Diplôme Licence",
+    date: "21.18.28",
+    time: "10:45 AM",
     amount: 30000,
     status: "expired",
-    date: "15 Oct 2024",
   },
   {
     id: "2",
-    title: "Vérification Diplôme Master",
+    title: "Vérification Diplôme Licence",
+    date: "20.03.24",
+    time: "11:30 AM",
     amount: 0,
-    status: "free",
-    date: "12 Oct 2024",
+    status: "success",
   },
   {
     id: "3",
     title: "Réabonnement Service Premium",
+    date: "19.05.24",
+    time: "09:15 AM",
     amount: 10000,
     status: "pending",
-    date: "10 Oct 2024",
   },
   {
     id: "4",
-    title: "Vérification Diplôme BTS",
-    amount: 15000,
+    title: "Réabonnement Service Premium",
+    date: "18.02.24",
+    time: "14:20 PM",
+    amount: 10000,
     status: "success",
-    date: "08 Oct 2024",
-  },
-  {
-    id: "5",
-    title: "Vérification Diplôme Licence",
-    amount: 30000,
-    status: "success",
-    date: "05 Oct 2024",
   },
 ];
 
 const statusConfig = {
   success: {
     icon: CheckCircle2,
-    label: "Payé",
-    className: "bg-success/10 text-success",
+    label: "Succès",
+    className: "text-success",
+    bgClass: "bg-success/10",
   },
   expired: {
     icon: XCircle,
     label: "Expiré",
-    className: "bg-destructive/10 text-destructive",
+    className: "text-destructive",
+    bgClass: "bg-destructive/10",
   },
   pending: {
     icon: Clock,
-    label: "En cours",
-    className: "bg-warning/10 text-warning",
+    label: "10 000 XAF",
+    className: "text-warning",
+    bgClass: "bg-warning/10",
   },
   free: {
     icon: CheckCircle2,
     label: "Gratuit",
-    className: "bg-info/10 text-info",
+    className: "text-info",
+    bgClass: "bg-info/10",
   },
 };
 
 export default function Payments() {
-  const [selectedPeriod, setSelectedPeriod] = useState("Octobre 2024");
-
   const stats = {
     paid: 95,
     pending: 3,
@@ -84,43 +85,52 @@ export default function Payments() {
   return (
     <MobileLayout>
       {/* Header */}
-      <div className="header-gradient px-4 pt-8 pb-6 safe-top">
-        <h1 className="text-xl font-bold text-white mb-4 animate-fade-in">
+      <div className="header-gradient px-4 pt-6 pb-6 safe-top">
+        <div className="flex items-center gap-3 mb-4 animate-fade-in">
+          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-accent" />
+          </div>
+          <span className="text-white font-bold">CDAS</span>
+        </div>
+        <h1 className="text-lg font-bold text-white animate-fade-in">
           Historique des Paiements
         </h1>
+      </div>
 
-        {/* Stats Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 animate-slide-up">
-          <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success" />
-            <span className="text-white text-sm font-medium">{stats.paid}% Payés</span>
-          </div>
-          <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-warning" />
-            <span className="text-white text-sm font-medium">{stats.pending}% En cours</span>
-          </div>
-          <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-destructive" />
-            <span className="text-white text-sm font-medium">{stats.expired}% Expirés</span>
+      {/* Stats Section */}
+      <div className="px-4 -mt-2">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-4 animate-slide-up">
+          <div className="grid grid-cols-3 gap-2">
+            <CircularProgress
+              value={stats.paid}
+              color="success"
+              sublabel="Service à Paye"
+              size={70}
+            />
+            <CircularProgress
+              value={stats.pending}
+              color="warning"
+              sublabel="En Attente"
+              size={70}
+            />
+            <CircularProgress
+              value={stats.expired}
+              color="destructive"
+              sublabel="Non Vérifié"
+              size={70}
+            />
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="px-4 py-3 border-b border-border bg-card sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <button className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg text-sm font-medium text-foreground">
-            <span>{selectedPeriod}</span>
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <button className="p-2 bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
-            <Filter className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Period Label */}
+      <div className="px-4 mt-4">
+        <p className="text-sm font-semibold text-foreground">Octobre 2024</p>
+        <p className="text-xs text-muted-foreground text-right -mt-4">TOUS STATUT</p>
       </div>
 
       {/* Payment List */}
-      <div className="px-4 py-4 space-y-3">
+      <div className="px-4 py-4 space-y-3 pb-24">
         {payments.map((payment, index) => {
           const config = statusConfig[payment.status];
           const Icon = config.icon;
@@ -128,34 +138,30 @@ export default function Payments() {
           return (
             <div
               key={payment.id}
-              className="bg-card rounded-xl p-4 shadow-sm border border-border animate-slide-up"
+              className="bg-card rounded-xl p-4 shadow-sm border border-border animate-slide-up flex items-center gap-3"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground text-sm truncate">
-                    {payment.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {payment.date}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-foreground">
-                    {payment.amount > 0
-                      ? `${payment.amount.toLocaleString()} XAF`
-                      : "Gratuit"}
-                  </p>
-                  <div
-                    className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1",
-                      config.className
-                    )}
-                  >
-                    <Icon className="w-3 h-3" />
-                    {config.label}
-                  </div>
-                </div>
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", config.bgClass)}>
+                <Icon className={cn("w-5 h-5", config.className)} />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-foreground text-sm truncate">
+                  {payment.title}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {payment.date} {payment.time}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className={cn("text-sm font-semibold", config.className)}>
+                  {payment.status === "pending" 
+                    ? `${payment.amount.toLocaleString()} XAF`
+                    : config.label
+                  }
+                </span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
           );

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Accueil", path: "/" },
-  { icon: QrCode, label: "Scanner", path: "/scanner" },
+  { icon: QrCode, label: "Vérification", path: "/scanner" },
   { icon: CreditCard, label: "Paiements", path: "/payments" },
   { icon: User, label: "Profil", path: "/profile" },
 ];
@@ -27,11 +27,16 @@ export function BottomNavigation() {
                 className={cn(
                   "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200",
                   isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className={cn("w-5 h-5", isActive && "animate-scale-in")} />
+                <div className={cn(
+                  "relative",
+                  isActive && "after:absolute after:-top-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-destructive"
+                )}>
+                  <Icon className={cn("w-5 h-5", isActive && "animate-scale-in")} />
+                </div>
                 <span className="text-xs font-medium">{item.label}</span>
               </Link>
             );
