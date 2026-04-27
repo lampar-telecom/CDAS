@@ -14,16 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      diplomas: {
+        Row: {
+          created_at: string
+          diploma_type: string
+          holder_email: string | null
+          holder_name: string
+          holder_user_id: string | null
+          id: string
+          institution: string
+          issued_by: string
+          qr_token: string
+          reference: string
+          specialization: string | null
+          status: Database["public"]["Enums"]["diploma_status"]
+          updated_at: string
+          verification_fee: number
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          diploma_type: string
+          holder_email?: string | null
+          holder_name: string
+          holder_user_id?: string | null
+          id?: string
+          institution: string
+          issued_by: string
+          qr_token?: string
+          reference: string
+          specialization?: string | null
+          status?: Database["public"]["Enums"]["diploma_status"]
+          updated_at?: string
+          verification_fee?: number
+          year: string
+        }
+        Update: {
+          created_at?: string
+          diploma_type?: string
+          holder_email?: string | null
+          holder_name?: string
+          holder_user_id?: string | null
+          id?: string
+          institution?: string
+          issued_by?: string
+          qr_token?: string
+          reference?: string
+          specialization?: string | null
+          status?: Database["public"]["Enums"]["diploma_status"]
+          updated_at?: string
+          verification_fee?: number
+          year?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verifications: {
+        Row: {
+          amount: number
+          created_at: string
+          diploma_id: string | null
+          id: string
+          paid: boolean
+          payment_method: string | null
+          query_type: string
+          query_value: string
+          result: Database["public"]["Enums"]["verification_result"]
+          verifier_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          diploma_id?: string | null
+          id?: string
+          paid?: boolean
+          payment_method?: string | null
+          query_type: string
+          query_value: string
+          result: Database["public"]["Enums"]["verification_result"]
+          verifier_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          diploma_id?: string | null
+          id?: string
+          paid?: boolean
+          payment_method?: string | null
+          query_type?: string
+          query_value?: string
+          result?: Database["public"]["Enums"]["verification_result"]
+          verifier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verifications_diploma_id_fkey"
+            columns: ["diploma_id"]
+            isOneToOne: false
+            referencedRelation: "diplomas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_primary_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "verifier" | "university"
+      diploma_status: "active" | "revoked"
+      verification_result: "authentic" | "invalid" | "not_found"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +307,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "verifier", "university"],
+      diploma_status: ["active", "revoked"],
+      verification_result: ["authentic", "invalid", "not_found"],
+    },
   },
 } as const
