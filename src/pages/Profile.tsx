@@ -1,20 +1,11 @@
 import { useState } from "react";
-import { 
-  Shield, 
-  ArrowLeft, 
-  ChevronRight, 
-  User, 
-  CreditCard, 
-  Clock,
-  Edit3,
-  Home,
-  QrCode,
-} from "lucide-react";
+import { Shield, ArrowLeft, ChevronRight, User, Edit3 } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,11 +19,15 @@ import {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const { profile, role, user, signOut } = useAuth();
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const handleLogout = () => {
+  const roleLabel = role === "university" ? "Institution" : role === "verifier" ? "Vérificateur" : "Étudiant";
+
+  const handleLogout = async () => {
     setShowLogoutDialog(false);
+    await signOut();
     toast.success("Déconnexion réussie");
     navigate("/login");
   };
@@ -67,8 +62,11 @@ export default function Profile() {
               </button>
             </div>
             
-            <h2 className="text-lg font-bold text-foreground">Mr Python</h2>
-            <p className="text-sm text-muted-foreground">mrpython@email.com</p>
+            <h2 className="text-lg font-bold text-foreground">{profile?.full_name || "Utilisateur"}</h2>
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
+              {roleLabel}
+            </span>
           </div>
         </div>
 
@@ -117,53 +115,15 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="mt-auto">
-          <div className="px-4 py-4 border-t border-border bg-card">
-            <div className="flex items-center justify-around mb-4">
-              <button 
-                onClick={() => navigate("/")}
-                className="flex flex-col items-center gap-1 text-primary"
-              >
-                <Home className="w-5 h-5" />
-                <span className="text-xs font-medium">ACCUEIL</span>
-              </button>
-              <button 
-                onClick={() => navigate("/scanner")}
-                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <QrCode className="w-5 h-5" />
-                <span className="text-xs font-medium">SCANNER</span>
-              </button>
-              <button 
-                onClick={() => navigate("/payments")}
-                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <CreditCard className="w-5 h-5" />
-                <span className="text-xs font-medium">PAIEMENT</span>
-              </button>
-              <button 
-                onClick={() => navigate("/payments")}
-                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Clock className="w-5 h-5" />
-                <span className="text-xs font-medium">HISTORIQUE</span>
-              </button>
-              <button className="flex flex-col items-center gap-1 text-muted-foreground">
-                <User className="w-5 h-5" />
-                <span className="text-xs font-medium">MON PROFIL</span>
-              </button>
-            </div>
-
-            {/* Logout Button */}
-            <Button 
-              onClick={() => setShowLogoutDialog(true)}
-              variant="destructive"
-              className="w-full h-12 font-semibold"
-            >
-              SE DÉCONNECTER
-            </Button>
-          </div>
+        {/* Logout */}
+        <div className="mt-auto px-4 pb-24 pt-6">
+          <Button
+            onClick={() => setShowLogoutDialog(true)}
+            variant="destructive"
+            className="w-full h-12 font-semibold"
+          >
+            SE DÉCONNECTER
+          </Button>
         </div>
 
         {/* Logout Confirmation Dialog */}
