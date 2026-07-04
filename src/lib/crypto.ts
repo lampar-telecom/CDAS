@@ -46,14 +46,15 @@ export function canonicalize(value: unknown): string {
 }
 
 export async function hmacSignHex(payload: string): Promise<string> {
+  const keyBuf = encoder.encode(SIGNING_KEY).slice().buffer;
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(SIGNING_KEY),
+    keyBuf,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
   );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload).slice().buffer);
   return bytesToHex(sig);
 }
 
