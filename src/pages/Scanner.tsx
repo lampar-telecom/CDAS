@@ -41,7 +41,7 @@ export default function Scanner() {
   }, []);
 
   const lookupDiploma = useCallback(
-    async (rawValue: string, queryType: "qr" | "reference") => {
+    async (rawValue: string, queryType: "qr" | "reference" | "pdf_hash") => {
       if (!user || isProcessingRef.current) return;
       isProcessingRef.current = true;
       setSearching(true);
@@ -50,11 +50,9 @@ export default function Scanner() {
       if (queryType === "qr") token = parseQrPayload(rawValue);
 
       let query = supabase.from("diplomas").select("*").limit(1);
-      if (queryType === "qr" && token) {
-        query = query.eq("qr_token", token);
-      } else {
-        query = query.eq("reference", rawValue.trim());
-      }
+      if (queryType === "qr" && token) query = query.eq("qr_token", token);
+      else if (queryType === "pdf_hash") query = query.eq("pdf_hash", rawValue);
+      else query = query.eq("reference", rawValue.trim());
 
       const { data, error } = await query.maybeSingle();
 
