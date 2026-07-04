@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { Shield, X, Search, Camera, Keyboard } from "lucide-react";
+import { Shield, X, Search, Camera, Keyboard, FileUp, Loader2 } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { DiplomaResult, DiplomaData } from "@/components/scanner/DiplomaResult";
 import { PaymentFlow } from "@/components/scanner/PaymentFlow";
@@ -11,9 +11,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { parseQrPayload } from "@/lib/qr";
 import { useAuth } from "@/contexts/AuthContext";
+import { sha256File } from "@/lib/crypto";
 
 type Step = "scan" | "result" | "payment";
-type Mode = "camera" | "manual";
+type Mode = "camera" | "manual" | "upload";
 
 const SCANNER_ELEMENT_ID = "cdas-qr-reader";
 
