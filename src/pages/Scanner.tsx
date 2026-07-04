@@ -187,23 +187,29 @@ export default function Scanner() {
           <div className="flex-1 flex flex-col">
             {/* Mode tabs */}
             <div className="px-4 pt-4">
-              <div className="grid grid-cols-2 gap-2 bg-secondary p-1 rounded-xl">
+              <div className="grid grid-cols-3 gap-2 bg-secondary p-1 rounded-xl">
                 <button onClick={() => setMode("camera")}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                     mode === "camera" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
                   }`}>
-                  <Camera className="w-4 h-4" /> Scanner QR
+                  <Camera className="w-4 h-4" /> QR
                 </button>
                 <button onClick={() => setMode("manual")}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
                     mode === "manual" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
                   }`}>
-                  <Keyboard className="w-4 h-4" /> Saisir l'ID
+                  <Keyboard className="w-4 h-4" /> ID
+                </button>
+                <button onClick={() => setMode("upload")}
+                  className={`flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                    mode === "upload" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                  }`}>
+                  <FileUp className="w-4 h-4" /> PDF
                 </button>
               </div>
             </div>
 
-            {mode === "camera" ? (
+            {mode === "camera" && (
               <div className="flex-1 flex flex-col items-center justify-start p-4">
                 <div className="relative w-full max-w-xs aspect-square rounded-2xl overflow-hidden bg-black">
                   <div id={SCANNER_ELEMENT_ID} className="w-full h-full [&_video]:object-cover [&_video]:w-full [&_video]:h-full" />
@@ -213,7 +219,9 @@ export default function Scanner() {
                   {searching ? "Analyse en cours..." : "Cadrez le QR code du diplôme"}
                 </p>
               </div>
-            ) : (
+            )}
+
+            {mode === "manual" && (
               <form onSubmit={handleManualSubmit} className="flex-1 flex flex-col p-4 gap-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
@@ -222,7 +230,7 @@ export default function Scanner() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input value={manualValue} onChange={(e) => setManualValue(e.target.value)}
-                      placeholder="Ex : CAM-2024-LIC-00847" className="h-12 pl-10 rounded-xl" />
+                      placeholder="Ex : IUT-2026-ATT-00847" className="h-12 pl-10 rounded-xl" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Saisissez le numéro de référence imprimé sur le diplôme.
@@ -234,6 +242,46 @@ export default function Scanner() {
                 </Button>
               </form>
             )}
+
+            {mode === "upload" && (
+              <div className="flex-1 flex flex-col p-4 gap-4">
+                <div className="border-2 border-dashed border-primary/30 rounded-2xl p-6 text-center bg-primary/5">
+                  <FileUp className="w-10 h-10 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-foreground mb-1">Téléverser un PDF</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Le fichier est haché (SHA-256) puis comparé au registre CDAS.
+                  </p>
+                  <label className="inline-block">
+                    <input type="file" accept="application/pdf" className="hidden"
+                      disabled={searching}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setSearching(true);
+                        try {
+                          const hash = await sha256File(file);
+                          toast.info("Empreinte calculée", { description: hash.slice(0, 24) + "..." });
+                          await lookupDiploma(hash, "pdf_hash");
+                        } catch (err) {
+                          toast.error("Impossible de hacher le fichier");
+                          setSearching(false);
+                        }
+                        e.target.value = "";
+                      }} />
+                    <span className="inline-flex items-center gap-2 px-4 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold cursor-pointer">
+                      {searching ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyse...</> : <>Choisir un fichier</>}
+                    </span>
+                  </label>
+                </div>
+                <div className="text-xs text-muted-foreground bg-info/5 border border-info/20 rounded-xl p-3">
+                  <p className="font-semibold text-foreground mb-1">Comment ça marche ?</p>
+                  1. On calcule l'empreinte SHA-256 du PDF.<br />
+                  2. On l'interroge dans le registre blockchain CDAS.<br />
+                  3. Si l'empreinte correspond, le diplôme est authentique.
+                </div>
+              </div>
+            )}
+
 
             {role !== "verifier" && (
               <div className="mx-4 mb-24 p-3 bg-warning/10 border border-warning/30 rounded-xl text-xs text-foreground">
