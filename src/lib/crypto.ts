@@ -14,12 +14,14 @@ export function bytesToHex(buffer: ArrayBuffer): string {
 }
 
 export async function sha256Hex(input: ArrayBuffer | Uint8Array | string): Promise<string> {
-  const data =
-    typeof input === "string"
-      ? encoder.encode(input)
-      : input instanceof Uint8Array
-      ? input
-      : new Uint8Array(input);
+  let data: ArrayBuffer;
+  if (typeof input === "string") {
+    data = encoder.encode(input).slice().buffer;
+  } else if (input instanceof Uint8Array) {
+    data = input.slice().buffer;
+  } else {
+    data = input;
+  }
   const digest = await crypto.subtle.digest("SHA-256", data);
   return bytesToHex(digest);
 }
