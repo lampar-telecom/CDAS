@@ -14,8 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      blockchain_ledger: {
+        Row: {
+          block_hash: string
+          block_index: number
+          created_at: string
+          created_by: string
+          diploma_id: string
+          event: string
+          id: string
+          pdf_hash: string
+          prev_hash: string | null
+          signature: string
+        }
+        Insert: {
+          block_hash: string
+          block_index?: number
+          created_at?: string
+          created_by: string
+          diploma_id: string
+          event?: string
+          id?: string
+          pdf_hash: string
+          prev_hash?: string | null
+          signature: string
+        }
+        Update: {
+          block_hash?: string
+          block_index?: number
+          created_at?: string
+          created_by?: string
+          diploma_id?: string
+          event?: string
+          id?: string
+          pdf_hash?: string
+          prev_hash?: string | null
+          signature?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blockchain_ledger_diploma_id_fkey"
+            columns: ["diploma_id"]
+            isOneToOne: false
+            referencedRelation: "diplomas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diplomas: {
         Row: {
+          attestation_number: string | null
+          birth_date: string | null
+          birth_place: string | null
+          cni: string | null
           created_at: string
           diploma_type: string
           holder_email: string | null
@@ -24,15 +75,25 @@ export type Database = {
           id: string
           institution: string
           issued_by: string
+          mention: string | null
+          moyenne: number | null
+          pdf_hash: string | null
           qr_token: string
           reference: string
+          signature: string | null
           specialization: string | null
           status: Database["public"]["Enums"]["diploma_status"]
           updated_at: string
+          validated_at: string | null
+          validated_by: string | null
           verification_fee: number
           year: string
         }
         Insert: {
+          attestation_number?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          cni?: string | null
           created_at?: string
           diploma_type: string
           holder_email?: string | null
@@ -41,15 +102,25 @@ export type Database = {
           id?: string
           institution: string
           issued_by: string
+          mention?: string | null
+          moyenne?: number | null
+          pdf_hash?: string | null
           qr_token?: string
           reference: string
+          signature?: string | null
           specialization?: string | null
           status?: Database["public"]["Enums"]["diploma_status"]
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           verification_fee?: number
           year: string
         }
         Update: {
+          attestation_number?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          cni?: string | null
           created_at?: string
           diploma_type?: string
           holder_email?: string | null
@@ -58,11 +129,17 @@ export type Database = {
           id?: string
           institution?: string
           issued_by?: string
+          mention?: string | null
+          moyenne?: number | null
+          pdf_hash?: string | null
           qr_token?: string
           reference?: string
+          signature?: string | null
           specialization?: string | null
           status?: Database["public"]["Enums"]["diploma_status"]
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           verification_fee?: number
           year?: string
         }
@@ -179,7 +256,7 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "verifier" | "university"
-      diploma_status: "active" | "revoked"
+      diploma_status: "active" | "revoked" | "draft"
       verification_result: "authentic" | "invalid" | "not_found"
     }
     CompositeTypes: {
@@ -309,7 +386,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "verifier", "university"],
-      diploma_status: ["active", "revoked"],
+      diploma_status: ["active", "revoked", "draft"],
       verification_result: ["authentic", "invalid", "not_found"],
     },
   },

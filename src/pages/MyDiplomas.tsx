@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, ArrowLeft, GraduationCap, Download, QrCode, Calendar, Building2 } from "lucide-react";
+import { Shield, ArrowLeft, GraduationCap, Download, QrCode, Calendar, Building2, ShieldCheck } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { generateAttestationPdf } from "@/lib/pdf";
+import { downloadPdf } from "@/lib/pdf";
 import { generateQrDataUrl } from "@/lib/qr";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,16 @@ interface Diploma {
   id: string;
   reference: string;
   qr_token: string;
+  attestation_number: string | null;
   holder_name: string;
   diploma_type: string;
   specialization: string | null;
   institution: string;
   year: string;
+  mention: string | null;
   status: string;
+  pdf_hash: string | null;
+  issued_by: string;
   created_at: string;
 }
 
@@ -39,7 +43,7 @@ export default function MyDiplomas() {
       .select("*")
       .eq("holder_user_id", user.id)
       .order("created_at", { ascending: false });
-    setDiplomas((data ?? []) as Diploma[]);
+    setDiplomas((data ?? []) as unknown as Diploma[]);
     setLoading(false);
   };
 
@@ -47,24 +51,19 @@ export default function MyDiplomas() {
 
   const claimByReference = async () => {
     if (!linkRef.trim() || !user) return;
-    // Try to attach a diploma to the current user (via holder_email match would be ideal but RLS prevents read).
-    // Workaround: attempt update by reference + holder_email = profile email if available.
     const { data: { user: u } } = await supabase.auth.getUser();
     const email = u?.email;
-    if (!email) {
-      toast.error("Email indisponible");
-      return;
-    }
+    if (!email) { toast.error("Email indisponible"); return; }
     const { data, error } = await supabase
       .from("diplomas")
-      .update({ holder_user_id: user.id })
+      .update({ holder_user_id: user.id } as never)
       .eq("reference", linkRef.trim())
       .eq("holder_email", email)
       .is("holder_user_id", null)
       .select();
     if (error || !data || data.length === 0) {
       toast.error("Aucun diplôme correspondant", {
-        description: "Vérifiez le numéro de référence et que votre email correspond.",
+        description: "Vérifiez le numéro de référence et votre email.",
       });
       return;
     }
@@ -74,16 +73,13 @@ export default function MyDiplomas() {
   };
 
   const downloadAttestation = async (d: Diploma) => {
-    await generateAttestationPdf({
-      reference: d.reference,
-      qr_token: d.qr_token,
-      holder_name: d.holder_name,
-      diploma_type: d.diploma_type,
-      specialization: d.specialization,
-      institution: d.institution,
-      year: d.year,
-      issued_at: d.created_at,
-    });
+    const path = `${d.issued_by}/${d.id}.pdf`;
+    const { data, error } = await supabase.storage.from("diplomas").download(path);
+    if (error || !data) {
+      toast.error("PDF non disponible", { description: "Le diplôme n'est pas encore signé." });
+      return;
+    }
+    downloadPdf(await data.arrayBuffer(), `attestation_${d.reference}.pdf`);
     toast.success("Attestation téléchargée");
   };
 
@@ -112,7 +108,7 @@ export default function MyDiplomas() {
             Saisissez le numéro de référence reçu de votre université. Votre email doit correspondre.
           </p>
           <div className="flex gap-2">
-            <Input value={linkRef} onChange={(e) => setLinkRef(e.target.value)} placeholder="CAM-2024-LIC-..." className="h-10" />
+            <Input value={linkRef} onChange={(e) => setLinkRef(e.target.value)} placeholder="IUT-2026-ATT-..." className="h-10" />
             <Button onClick={claimByReference} className="h-10 bg-primary text-primary-foreground">Rattacher</Button>
           </div>
         </div>
@@ -125,7 +121,7 @@ export default function MyDiplomas() {
         {loading && <p className="text-sm text-muted-foreground text-center py-8">Chargement...</p>}
         {!loading && diplomas.length === 0 && (
           <div className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border rounded-xl">
-            Aucun diplôme rattaché. Utilisez le formulaire ci-dessus.
+            Aucun diplôme rattaché.
           </div>
         )}
         {diplomas.map((d) => (
@@ -138,20 +134,29 @@ export default function MyDiplomas() {
                 <p className="font-semibold text-foreground truncate">{d.diploma_type}</p>
                 <p className="text-xs text-muted-foreground truncate">{d.specialization}</p>
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                d.status === "active" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-              }`}>{d.status === "active" ? "Valide" : "Révoqué"}</span>
+              <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+                d.status === "active" ? "bg-success/10 text-success"
+                : d.status === "draft" ? "bg-warning/10 text-warning"
+                : "bg-destructive/10 text-destructive"
+              }`}>
+                {d.status === "active" ? <><ShieldCheck className="w-3 h-3" /> Signé</>
+                 : d.status === "draft" ? "En attente"
+                 : "Révoqué"}
+              </span>
             </div>
             <div className="text-xs text-muted-foreground space-y-1 mb-3">
               <p className="flex items-center gap-1"><Building2 className="w-3 h-3" /> {d.institution}</p>
               <p className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {d.year}</p>
               <p className="font-mono">{d.reference}</p>
+              {d.pdf_hash && <p className="font-mono text-[10px]">hash: {d.pdf_hash.slice(0, 24)}...</p>}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" onClick={() => showQr(d)} className="h-9">
                 <QrCode className="w-4 h-4 mr-1" /> QR
               </Button>
-              <Button size="sm" onClick={() => downloadAttestation(d)} className="h-9 bg-primary text-primary-foreground">
+              <Button size="sm" onClick={() => downloadAttestation(d)}
+                disabled={d.status !== "active"}
+                className="h-9 bg-primary text-primary-foreground">
                 <Download className="w-4 h-4 mr-1" /> Attestation
               </Button>
             </div>
