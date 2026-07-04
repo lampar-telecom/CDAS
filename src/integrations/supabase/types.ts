@@ -179,7 +179,7 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "verifier" | "university"
-      diploma_status: "active" | "revoked"
+      diploma_status: "active" | "revoked" | "draft"
       verification_result: "authentic" | "invalid" | "not_found"
     }
     CompositeTypes: {
@@ -309,7 +309,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "verifier", "university"],
-      diploma_status: ["active", "revoked"],
+      diploma_status: ["active", "revoked", "draft"],
       verification_result: ["authentic", "invalid", "not_found"],
     },
   },
