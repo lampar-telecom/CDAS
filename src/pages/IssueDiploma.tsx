@@ -193,8 +193,11 @@ export default function IssueDiploma() {
       const pdfBuf = await buildAttestationPdf({
         attestation_number,
         reference: d.reference,
+        sub_reference: d.sub_reference,
         qr_token: d.qr_token,
         holder_name: d.holder_name,
+        sexe: d.sexe,
+        matricule: d.matricule,
         birth_date: d.birth_date,
         birth_place: d.birth_place,
         diploma_type: d.diploma_type,
@@ -202,6 +205,10 @@ export default function IssueDiploma() {
         institution: d.institution,
         year: d.year,
         mention: d.mention,
+        grade_letter: d.grade_letter,
+        credits: d.credits,
+        jury_session: d.jury_session,
+        director_name: d.director_name,
         issued_at: new Date().toISOString(),
         pdf_hash: dataHash,
       });
