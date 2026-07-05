@@ -20,9 +20,12 @@ import { z } from "zod";
 
 const schema = z.object({
   reference: z.string().trim().min(3).max(60),
+  sub_reference: z.string().trim().max(60).optional(),
   holder_name: z.string().trim().min(2).max(120),
   holder_email: z.string().trim().email().optional().or(z.literal("")),
+  sexe: z.string().trim().max(3).optional(),
   cni: z.string().trim().max(30).optional(),
+  matricule: z.string().trim().max(30).optional(),
   birth_date: z.string().optional(),
   birth_place: z.string().trim().max(80).optional(),
   diploma_type: z.string().trim().min(2).max(80),
@@ -30,18 +33,25 @@ const schema = z.object({
   institution: z.string().trim().min(2).max(120),
   year: z.string().trim().regex(/^\d{4}(\/\d{4})?$/, "Format : 2025 ou 2025/2026"),
   mention: z.string().trim().max(30).optional(),
+  grade_letter: z.string().trim().max(3).optional(),
   moyenne: z.string().optional(),
+  credits: z.string().optional(),
+  jury_session: z.string().trim().max(40).optional(),
+  director_name: z.string().trim().max(80).optional(),
   verification_fee: z.coerce.number().int().min(0).max(1_000_000),
 });
 
 interface Diploma {
   id: string;
   reference: string;
+  sub_reference: string | null;
   qr_token: string;
   attestation_number: string | null;
   holder_name: string;
   holder_email: string | null;
+  sexe: string | null;
   cni: string | null;
+  matricule: string | null;
   birth_date: string | null;
   birth_place: string | null;
   diploma_type: string;
@@ -49,7 +59,11 @@ interface Diploma {
   institution: string;
   year: string;
   mention: string | null;
+  grade_letter: string | null;
   moyenne: number | null;
+  credits: number | null;
+  jury_session: string | null;
+  director_name: string | null;
   status: string;
   verification_fee: number;
   pdf_hash: string | null;
@@ -60,6 +74,7 @@ interface Diploma {
 }
 
 const MENTIONS = ["PASSABLE", "ASSEZ BIEN", "BIEN", "TRÈS BIEN", "EXCELLENT"];
+const GRADES = ["", "A", "B", "C", "D", "E"];
 
 export default function IssueDiploma() {
   const navigate = useNavigate();
@@ -71,19 +86,27 @@ export default function IssueDiploma() {
 
   const [form, setForm] = useState({
     reference: "",
+    sub_reference: "IUT/DA/DFI/CD/DSI/SCI",
     holder_name: "",
     holder_email: "",
+    sexe: "M",
     cni: "",
+    matricule: "",
     birth_date: "",
     birth_place: "",
-    diploma_type: "Attestation de reussite",
+    diploma_type: "Diplôme Universitaire De Technologie",
     specialization: "",
     institution: "UNIVERSITE DE DOUALA",
     year: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
     mention: "ASSEZ BIEN",
+    grade_letter: "B",
     moyenne: "",
+    credits: "120",
+    jury_session: "Août 2025",
+    director_name: "Pr. Jacques ETAME",
     verification_fee: "10000",
   });
+
 
   const load = async () => {
     if (!user) return;
