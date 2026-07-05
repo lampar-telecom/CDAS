@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseQrPayload } from "@/lib/qr";
 import { useAuth } from "@/contexts/AuthContext";
 import { sha256File } from "@/lib/crypto";
+import { buildAttestationPdf, downloadPdf } from "@/lib/pdf";
 
 type Step = "scan" | "result" | "payment";
 type Mode = "camera" | "manual" | "upload";
