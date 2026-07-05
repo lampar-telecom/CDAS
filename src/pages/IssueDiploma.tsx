@@ -291,19 +291,36 @@ export default function IssueDiploma() {
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Nouveau diplôme (brouillon)</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-3">
-              <Field label="N° de référence" v={form.reference} onChange={(v) => setForm({ ...form, reference: v })} placeholder="IUT-2026-ATT-00847" />
-              <Field label="Nom complet du titulaire" v={form.holder_name} onChange={(v) => setForm({ ...form, holder_name: v })} placeholder="JAMBONG KONO ALAIN YANN" />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="N° de référence" v={form.reference} onChange={(v) => setForm({ ...form, reference: v })} placeholder="2025I01030" />
+                <Field label="Sous-référence" v={form.sub_reference} onChange={(v) => setForm({ ...form, sub_reference: v })} placeholder="IUT/DA/DFI/CD/DSI/SCI" />
+              </div>
+              <Field label="Nom complet du titulaire" v={form.holder_name} onChange={(v) => setForm({ ...form, holder_name: v })} placeholder="ANAFACK DONGMO FRANC ROCHINEL" />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Sexe</Label>
+                  <select value={form.sexe} onChange={(e) => setForm({ ...form, sexe: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option>M</option><option>F</option>
+                  </select>
+                </div>
+                <Field label="CNI" v={form.cni} onChange={(v) => setForm({ ...form, cni: v })} placeholder="123456789" />
+                <Field label="N° Matricule" v={form.matricule} onChange={(v) => setForm({ ...form, matricule: v })} placeholder="23I02030" />
+              </div>
               <Field label="Email du titulaire" v={form.holder_email} onChange={(v) => setForm({ ...form, holder_email: v })} placeholder="email@exemple.cm" type="email" />
-              <Field label="CNI" v={form.cni} onChange={(v) => setForm({ ...form, cni: v })} placeholder="1234567890" />
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Date de naissance" v={form.birth_date} onChange={(v) => setForm({ ...form, birth_date: v })} type="date" />
-                <Field label="Lieu de naissance" v={form.birth_place} onChange={(v) => setForm({ ...form, birth_place: v })} placeholder="DOUALA" />
+                <Field label="Lieu de naissance" v={form.birth_place} onChange={(v) => setForm({ ...form, birth_place: v })} placeholder="FOTOMENA" />
               </div>
-              <Field label="Type de diplôme" v={form.diploma_type} onChange={(v) => setForm({ ...form, diploma_type: v })} placeholder="Attestation de reussite" />
-              <Field label="Spécialité" v={form.specialization} onChange={(v) => setForm({ ...form, specialization: v })} placeholder="GENIE LOGICIEL" />
+              <Field label="Type de diplôme" v={form.diploma_type} onChange={(v) => setForm({ ...form, diploma_type: v })} placeholder="Diplôme Universitaire De Technologie" />
+              <Field label="Spécialité" v={form.specialization} onChange={(v) => setForm({ ...form, specialization: v })} placeholder="GENIE INFORMATIQUE" />
               <Field label="Institution" v={form.institution} onChange={(v) => setForm({ ...form, institution: v })} placeholder="UNIVERSITE DE DOUALA" />
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Année académique" v={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025/2026" />
+                <Field label="Année académique" v={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2024/2025" />
+                <Field label="Jury (session)" v={form.jury_session} onChange={(v) => setForm({ ...form, jury_session: v })} placeholder="Août 2025" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Crédits" v={form.credits} onChange={(v) => setForm({ ...form, credits: v })} type="number" placeholder="120" />
                 <div className="space-y-1">
                   <Label className="text-xs">Mention</Label>
                   <select value={form.mention} onChange={(e) => setForm({ ...form, mention: e.target.value })}
@@ -311,11 +328,19 @@ export default function IssueDiploma() {
                     {MENTIONS.map((m) => <option key={m}>{m}</option>)}
                   </select>
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Grade</Label>
+                  <select value={form.grade_letter} onChange={(e) => setForm({ ...form, grade_letter: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    {GRADES.map((g) => <option key={g} value={g}>{g || "—"}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Moyenne / 20" v={form.moyenne} onChange={(v) => setForm({ ...form, moyenne: v })} type="number" placeholder="14.5" />
                 <Field label="Frais vérif. (XAF)" v={form.verification_fee} onChange={(v) => setForm({ ...form, verification_fee: v })} type="number" />
               </div>
+              <Field label="Nom du Directeur (signataire)" v={form.director_name} onChange={(v) => setForm({ ...form, director_name: v })} placeholder="Pr. Jacques ETAME" />
               <Button type="submit" disabled={submitting} className="w-full h-11 bg-primary text-primary-foreground">
                 {submitting ? "Création..." : "Créer le brouillon"}
               </Button>
