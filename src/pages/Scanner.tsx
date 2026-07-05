@@ -96,10 +96,10 @@ export default function Scanner() {
 
       if (diplomaData) {
         setDiploma(diplomaData);
+        setDiplomaRow(data);
         setStep("result");
         await stopScanner();
       } else {
-        // Reset to allow another attempt
         setTimeout(() => { isProcessingRef.current = false; }, 1500);
       }
     },
