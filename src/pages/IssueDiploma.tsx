@@ -132,9 +132,12 @@ export default function IssueDiploma() {
     const { error } = await supabase.from("diplomas").insert({
       issued_by: user!.id,
       reference: payload.reference,
+      sub_reference: payload.sub_reference || null,
       holder_name: payload.holder_name,
       holder_email: payload.holder_email || null,
+      sexe: payload.sexe || null,
       cni: payload.cni || null,
+      matricule: payload.matricule || null,
       birth_date: payload.birth_date || null,
       birth_place: payload.birth_place || null,
       diploma_type: payload.diploma_type,
@@ -142,10 +145,15 @@ export default function IssueDiploma() {
       institution: payload.institution,
       year: payload.year,
       mention: payload.mention || null,
+      grade_letter: payload.grade_letter || null,
       moyenne: payload.moyenne ? Number(payload.moyenne) : null,
+      credits: payload.credits ? Number(payload.credits) : null,
+      jury_session: payload.jury_session || null,
+      director_name: payload.director_name || null,
       verification_fee: payload.verification_fee,
       status: "draft",
     } as never);
+
     setSubmitting(false);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Ce numéro de référence existe déjà" : error.message);
