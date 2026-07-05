@@ -26,6 +26,7 @@ export default function Scanner() {
   const [mode, setMode] = useState<Mode>("camera");
   const [manualValue, setManualValue] = useState("");
   const [diploma, setDiploma] = useState<DiplomaData | null>(null);
+  const [diplomaRow, setDiplomaRow] = useState<any | null>(null);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
