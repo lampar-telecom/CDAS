@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseQrPayload } from "@/lib/qr";
 import { useAuth } from "@/contexts/AuthContext";
 import { sha256File } from "@/lib/crypto";
+import { buildAttestationPdf, downloadPdf } from "@/lib/pdf";
 
 type Step = "scan" | "result" | "payment";
 type Mode = "camera" | "manual" | "upload";
@@ -25,6 +26,7 @@ export default function Scanner() {
   const [mode, setMode] = useState<Mode>("camera");
   const [manualValue, setManualValue] = useState("");
   const [diploma, setDiploma] = useState<DiplomaData | null>(null);
+  const [diplomaRow, setDiplomaRow] = useState<any | null>(null);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -94,10 +96,10 @@ export default function Scanner() {
 
       if (diplomaData) {
         setDiploma(diplomaData);
+        setDiplomaRow(data);
         setStep("result");
         await stopScanner();
       } else {
-        // Reset to allow another attempt
         setTimeout(() => { isProcessingRef.current = false; }, 1500);
       }
     },
@@ -145,6 +147,7 @@ export default function Scanner() {
 
   const handleNewScan = () => {
     setDiploma(null);
+    setDiplomaRow(null);
     setVerificationId(null);
     setStep("scan");
     isProcessingRef.current = false;
@@ -154,7 +157,52 @@ export default function Scanner() {
     if (verificationId) {
       await supabase.from("verifications").update({ paid: true, payment_method: "mobile_money" }).eq("id", verificationId);
     }
-    toast.success("Vérification finalisée !");
+    // Generate certified PDF for the verifier
+    try {
+      if (diplomaRow) {
+        const d = diplomaRow;
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const { data: verifierProfile } = await supabase
+          .from("profiles").select("full_name").eq("id", authUser?.id ?? "").maybeSingle();
+        const pdfBuf = await buildAttestationPdf(
+          {
+            attestation_number: d.attestation_number ?? d.qr_token?.slice(0, 12) ?? "",
+            reference: d.reference,
+            sub_reference: d.sub_reference,
+            qr_token: d.qr_token,
+            holder_name: d.holder_name,
+            sexe: d.sexe,
+            matricule: d.matricule,
+            birth_date: d.birth_date,
+            birth_place: d.birth_place,
+            diploma_type: d.diploma_type,
+            specialization: d.specialization,
+            institution: d.institution,
+            year: d.year,
+            mention: d.mention,
+            grade_letter: d.grade_letter,
+            credits: d.credits,
+            jury_session: d.jury_session,
+            director_name: d.director_name,
+            issued_at: d.validated_at ?? d.created_at,
+            pdf_hash: d.pdf_hash ?? "",
+          },
+          {
+            verifier_name: verifierProfile?.full_name ?? "Vérificateur CDAS",
+            verifier_email: authUser?.email ?? null,
+            verified_at: new Date().toISOString(),
+            transaction_id: verificationId ?? "cdas",
+            amount: d.verification_fee ?? 10000,
+            pdf_hash: d.pdf_hash ?? "",
+          }
+        );
+        downloadPdf(pdfBuf, `certificat_${d.reference}.pdf`);
+        toast.success("Certificat téléchargé", { description: "PDF certifié CDAS avec cachet officiel." });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Impossible de générer le certificat");
+    }
     navigate("/history");
   };
 

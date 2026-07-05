@@ -68,21 +68,28 @@ export type Database = {
           birth_place: string | null
           cni: string | null
           created_at: string
+          credits: number | null
           diploma_type: string
+          director_name: string | null
+          grade_letter: string | null
           holder_email: string | null
           holder_name: string
           holder_user_id: string | null
           id: string
           institution: string
           issued_by: string
+          jury_session: string | null
+          matricule: string | null
           mention: string | null
           moyenne: number | null
           pdf_hash: string | null
           qr_token: string
           reference: string
+          sexe: string | null
           signature: string | null
           specialization: string | null
           status: Database["public"]["Enums"]["diploma_status"]
+          sub_reference: string | null
           updated_at: string
           validated_at: string | null
           validated_by: string | null
@@ -95,21 +102,28 @@ export type Database = {
           birth_place?: string | null
           cni?: string | null
           created_at?: string
+          credits?: number | null
           diploma_type: string
+          director_name?: string | null
+          grade_letter?: string | null
           holder_email?: string | null
           holder_name: string
           holder_user_id?: string | null
           id?: string
           institution: string
           issued_by: string
+          jury_session?: string | null
+          matricule?: string | null
           mention?: string | null
           moyenne?: number | null
           pdf_hash?: string | null
           qr_token?: string
           reference: string
+          sexe?: string | null
           signature?: string | null
           specialization?: string | null
           status?: Database["public"]["Enums"]["diploma_status"]
+          sub_reference?: string | null
           updated_at?: string
           validated_at?: string | null
           validated_by?: string | null
@@ -122,21 +136,28 @@ export type Database = {
           birth_place?: string | null
           cni?: string | null
           created_at?: string
+          credits?: number | null
           diploma_type?: string
+          director_name?: string | null
+          grade_letter?: string | null
           holder_email?: string | null
           holder_name?: string
           holder_user_id?: string | null
           id?: string
           institution?: string
           issued_by?: string
+          jury_session?: string | null
+          matricule?: string | null
           mention?: string | null
           moyenne?: number | null
           pdf_hash?: string | null
           qr_token?: string
           reference?: string
+          sexe?: string | null
           signature?: string | null
           specialization?: string | null
           status?: Database["public"]["Enums"]["diploma_status"]
+          sub_reference?: string | null
           updated_at?: string
           validated_at?: string | null
           validated_by?: string | null

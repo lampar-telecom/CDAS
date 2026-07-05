@@ -20,9 +20,12 @@ import { z } from "zod";
 
 const schema = z.object({
   reference: z.string().trim().min(3).max(60),
+  sub_reference: z.string().trim().max(60).optional(),
   holder_name: z.string().trim().min(2).max(120),
   holder_email: z.string().trim().email().optional().or(z.literal("")),
+  sexe: z.string().trim().max(3).optional(),
   cni: z.string().trim().max(30).optional(),
+  matricule: z.string().trim().max(30).optional(),
   birth_date: z.string().optional(),
   birth_place: z.string().trim().max(80).optional(),
   diploma_type: z.string().trim().min(2).max(80),
@@ -30,18 +33,25 @@ const schema = z.object({
   institution: z.string().trim().min(2).max(120),
   year: z.string().trim().regex(/^\d{4}(\/\d{4})?$/, "Format : 2025 ou 2025/2026"),
   mention: z.string().trim().max(30).optional(),
+  grade_letter: z.string().trim().max(3).optional(),
   moyenne: z.string().optional(),
+  credits: z.string().optional(),
+  jury_session: z.string().trim().max(40).optional(),
+  director_name: z.string().trim().max(80).optional(),
   verification_fee: z.coerce.number().int().min(0).max(1_000_000),
 });
 
 interface Diploma {
   id: string;
   reference: string;
+  sub_reference: string | null;
   qr_token: string;
   attestation_number: string | null;
   holder_name: string;
   holder_email: string | null;
+  sexe: string | null;
   cni: string | null;
+  matricule: string | null;
   birth_date: string | null;
   birth_place: string | null;
   diploma_type: string;
@@ -49,7 +59,11 @@ interface Diploma {
   institution: string;
   year: string;
   mention: string | null;
+  grade_letter: string | null;
   moyenne: number | null;
+  credits: number | null;
+  jury_session: string | null;
+  director_name: string | null;
   status: string;
   verification_fee: number;
   pdf_hash: string | null;
@@ -60,6 +74,7 @@ interface Diploma {
 }
 
 const MENTIONS = ["PASSABLE", "ASSEZ BIEN", "BIEN", "TRÈS BIEN", "EXCELLENT"];
+const GRADES = ["", "A", "B", "C", "D", "E"];
 
 export default function IssueDiploma() {
   const navigate = useNavigate();
@@ -71,19 +86,27 @@ export default function IssueDiploma() {
 
   const [form, setForm] = useState({
     reference: "",
+    sub_reference: "IUT/DA/DFI/CD/DSI/SCI",
     holder_name: "",
     holder_email: "",
+    sexe: "M",
     cni: "",
+    matricule: "",
     birth_date: "",
     birth_place: "",
-    diploma_type: "Attestation de reussite",
+    diploma_type: "Diplôme Universitaire De Technologie",
     specialization: "",
     institution: "UNIVERSITE DE DOUALA",
     year: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
     mention: "ASSEZ BIEN",
+    grade_letter: "B",
     moyenne: "",
+    credits: "120",
+    jury_session: "Août 2025",
+    director_name: "Pr. Jacques ETAME",
     verification_fee: "10000",
   });
+
 
   const load = async () => {
     if (!user) return;
@@ -109,9 +132,12 @@ export default function IssueDiploma() {
     const { error } = await supabase.from("diplomas").insert({
       issued_by: user!.id,
       reference: payload.reference,
+      sub_reference: payload.sub_reference || null,
       holder_name: payload.holder_name,
       holder_email: payload.holder_email || null,
+      sexe: payload.sexe || null,
       cni: payload.cni || null,
+      matricule: payload.matricule || null,
       birth_date: payload.birth_date || null,
       birth_place: payload.birth_place || null,
       diploma_type: payload.diploma_type,
@@ -119,10 +145,15 @@ export default function IssueDiploma() {
       institution: payload.institution,
       year: payload.year,
       mention: payload.mention || null,
+      grade_letter: payload.grade_letter || null,
       moyenne: payload.moyenne ? Number(payload.moyenne) : null,
+      credits: payload.credits ? Number(payload.credits) : null,
+      jury_session: payload.jury_session || null,
+      director_name: payload.director_name || null,
       verification_fee: payload.verification_fee,
       status: "draft",
     } as never);
+
     setSubmitting(false);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Ce numéro de référence existe déjà" : error.message);
@@ -162,8 +193,11 @@ export default function IssueDiploma() {
       const pdfBuf = await buildAttestationPdf({
         attestation_number,
         reference: d.reference,
+        sub_reference: d.sub_reference,
         qr_token: d.qr_token,
         holder_name: d.holder_name,
+        sexe: d.sexe,
+        matricule: d.matricule,
         birth_date: d.birth_date,
         birth_place: d.birth_place,
         diploma_type: d.diploma_type,
@@ -171,6 +205,10 @@ export default function IssueDiploma() {
         institution: d.institution,
         year: d.year,
         mention: d.mention,
+        grade_letter: d.grade_letter,
+        credits: d.credits,
+        jury_session: d.jury_session,
+        director_name: d.director_name,
         issued_at: new Date().toISOString(),
         pdf_hash: dataHash,
       });
@@ -253,19 +291,36 @@ export default function IssueDiploma() {
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Nouveau diplôme (brouillon)</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-3">
-              <Field label="N° de référence" v={form.reference} onChange={(v) => setForm({ ...form, reference: v })} placeholder="IUT-2026-ATT-00847" />
-              <Field label="Nom complet du titulaire" v={form.holder_name} onChange={(v) => setForm({ ...form, holder_name: v })} placeholder="JAMBONG KONO ALAIN YANN" />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="N° de référence" v={form.reference} onChange={(v) => setForm({ ...form, reference: v })} placeholder="2025I01030" />
+                <Field label="Sous-référence" v={form.sub_reference} onChange={(v) => setForm({ ...form, sub_reference: v })} placeholder="IUT/DA/DFI/CD/DSI/SCI" />
+              </div>
+              <Field label="Nom complet du titulaire" v={form.holder_name} onChange={(v) => setForm({ ...form, holder_name: v })} placeholder="ANAFACK DONGMO FRANC ROCHINEL" />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Sexe</Label>
+                  <select value={form.sexe} onChange={(e) => setForm({ ...form, sexe: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option>M</option><option>F</option>
+                  </select>
+                </div>
+                <Field label="CNI" v={form.cni} onChange={(v) => setForm({ ...form, cni: v })} placeholder="123456789" />
+                <Field label="N° Matricule" v={form.matricule} onChange={(v) => setForm({ ...form, matricule: v })} placeholder="23I02030" />
+              </div>
               <Field label="Email du titulaire" v={form.holder_email} onChange={(v) => setForm({ ...form, holder_email: v })} placeholder="email@exemple.cm" type="email" />
-              <Field label="CNI" v={form.cni} onChange={(v) => setForm({ ...form, cni: v })} placeholder="1234567890" />
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Date de naissance" v={form.birth_date} onChange={(v) => setForm({ ...form, birth_date: v })} type="date" />
-                <Field label="Lieu de naissance" v={form.birth_place} onChange={(v) => setForm({ ...form, birth_place: v })} placeholder="DOUALA" />
+                <Field label="Lieu de naissance" v={form.birth_place} onChange={(v) => setForm({ ...form, birth_place: v })} placeholder="FOTOMENA" />
               </div>
-              <Field label="Type de diplôme" v={form.diploma_type} onChange={(v) => setForm({ ...form, diploma_type: v })} placeholder="Attestation de reussite" />
-              <Field label="Spécialité" v={form.specialization} onChange={(v) => setForm({ ...form, specialization: v })} placeholder="GENIE LOGICIEL" />
+              <Field label="Type de diplôme" v={form.diploma_type} onChange={(v) => setForm({ ...form, diploma_type: v })} placeholder="Diplôme Universitaire De Technologie" />
+              <Field label="Spécialité" v={form.specialization} onChange={(v) => setForm({ ...form, specialization: v })} placeholder="GENIE INFORMATIQUE" />
               <Field label="Institution" v={form.institution} onChange={(v) => setForm({ ...form, institution: v })} placeholder="UNIVERSITE DE DOUALA" />
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Année académique" v={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2025/2026" />
+                <Field label="Année académique" v={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2024/2025" />
+                <Field label="Jury (session)" v={form.jury_session} onChange={(v) => setForm({ ...form, jury_session: v })} placeholder="Août 2025" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Crédits" v={form.credits} onChange={(v) => setForm({ ...form, credits: v })} type="number" placeholder="120" />
                 <div className="space-y-1">
                   <Label className="text-xs">Mention</Label>
                   <select value={form.mention} onChange={(e) => setForm({ ...form, mention: e.target.value })}
@@ -273,11 +328,19 @@ export default function IssueDiploma() {
                     {MENTIONS.map((m) => <option key={m}>{m}</option>)}
                   </select>
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Grade</Label>
+                  <select value={form.grade_letter} onChange={(e) => setForm({ ...form, grade_letter: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    {GRADES.map((g) => <option key={g} value={g}>{g || "—"}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Moyenne / 20" v={form.moyenne} onChange={(v) => setForm({ ...form, moyenne: v })} type="number" placeholder="14.5" />
                 <Field label="Frais vérif. (XAF)" v={form.verification_fee} onChange={(v) => setForm({ ...form, verification_fee: v })} type="number" />
               </div>
+              <Field label="Nom du Directeur (signataire)" v={form.director_name} onChange={(v) => setForm({ ...form, director_name: v })} placeholder="Pr. Jacques ETAME" />
               <Button type="submit" disabled={submitting} className="w-full h-11 bg-primary text-primary-foreground">
                 {submitting ? "Création..." : "Créer le brouillon"}
               </Button>
