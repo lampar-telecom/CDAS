@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { Shield, X, Search, Camera, Keyboard, FileUp, Loader2, Download, CheckCircle2, BadgeCheck } from "lucide-react";
+import { Shield, X, Search, Camera, Keyboard, FileUp, Loader2, Download, CheckCircle2, BadgeCheck, AlertTriangle, RefreshCw } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { DiplomaResult, DiplomaData } from "@/components/scanner/DiplomaResult";
 import { PaymentFlow } from "@/components/scanner/PaymentFlow";
@@ -13,11 +13,19 @@ import { parseQrPayload } from "@/lib/qr";
 import { useAuth } from "@/contexts/AuthContext";
 import { sha256File } from "@/lib/crypto";
 import { buildAttestationPdf, downloadPdf } from "@/lib/pdf";
+import { stampFakePdf } from "@/lib/fakeStamp";
 
-type Step = "scan" | "result" | "payment" | "certified";
+type Step = "scan" | "result" | "payment" | "certified" | "fake";
 type Mode = "camera" | "manual" | "upload";
 
+interface UploadedDoc {
+  bytes: ArrayBuffer;
+  name: string;
+  hash: string;
+}
+
 const SCANNER_ELEMENT_ID = "cdas-qr-reader";
+const UNKNOWN_FEE = 10000;
 
 export default function Scanner() {
   const navigate = useNavigate();
@@ -29,6 +37,10 @@ export default function Scanner() {
   const [diplomaRow, setDiplomaRow] = useState<any | null>(null);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<UploadedDoc | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isProcessingRef = useRef(false);
 
@@ -40,10 +52,42 @@ export default function Scanner() {
       } catch {}
       scannerRef.current = null;
     }
+    setCameraOn(false);
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    try {
+      const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 },
+        (decoded) => {
+          if (!isProcessingRef.current) lookupDiploma(decoded, "qr");
+        },
+        () => {}
+      );
+      setCameraOn(true);
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      scannerRef.current = null;
+      setCameraOn(false);
+      const name = err?.name || "";
+      if (name === "NotAllowedError" || String(err).includes("Permission")) {
+        setCameraError("Permission caméra refusée. Autorisez la caméra dans les paramètres du navigateur, ou ouvrez l'app dans un nouvel onglet (l'aperçu intégré bloque souvent la caméra).");
+      } else if (name === "NotFoundError") {
+        setCameraError("Aucune caméra détectée sur cet appareil.");
+      } else {
+        setCameraError("Caméra inaccessible. Vous pouvez utiliser la saisie manuelle ou l'upload PDF.");
+      }
+    }
+    // lookupDiploma is stable via closure over refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const lookupDiploma = useCallback(
-    async (rawValue: string, queryType: "qr" | "reference" | "pdf_hash") => {
+    async (rawValue: string, queryType: "qr" | "reference" | "pdf_hash", opts?: { uploadedDoc?: UploadedDoc }) => {
       if (!user || isProcessingRef.current) return;
       isProcessingRef.current = true;
       setSearching(true);
@@ -63,7 +107,6 @@ export default function Scanner() {
 
       if (error || !data) {
         result = "not_found";
-        toast.error("Diplôme introuvable", { description: "Aucune correspondance dans la base officielle." });
       } else if (data.status === "revoked") {
         result = "invalid";
         diplomaData = mapToDiploma(data);
@@ -75,20 +118,24 @@ export default function Scanner() {
       }
 
       // Log verification (only verifiers can insert per RLS)
+      let insertedId: string | null = null;
       if (role === "verifier") {
         const { data: ins } = await supabase
           .from("verifications")
           .insert({
             verifier_id: user.id,
             diploma_id: data?.id ?? null,
-            query_value: rawValue,
+            query_value: opts?.uploadedDoc?.name ?? rawValue,
             query_type: queryType,
             result,
-            amount: data?.verification_fee ?? 0,
+            amount: data?.verification_fee ?? UNKNOWN_FEE,
           })
           .select()
           .single();
-        if (ins) setVerificationId(ins.id);
+        if (ins) {
+          setVerificationId(ins.id);
+          insertedId = ins.id;
+        }
       }
 
       setSearching(false);
@@ -99,43 +146,44 @@ export default function Scanner() {
         setDiplomaRow(data);
         setStep("result");
         await stopScanner();
+      } else if (opts?.uploadedDoc) {
+        // Not found but the verifier uploaded a document: accept and route
+        // through payment; after payment we'll emit a "FAUX" stamped PDF.
+        setUploaded(opts.uploadedDoc);
+        const pseudo: DiplomaData = {
+          id: opts.uploadedDoc.name,
+          type: "Document soumis à vérification",
+          holder: "—",
+          institution: "Registre CDAS — recherche en cours",
+          year: new Date().getFullYear().toString(),
+          specialization: `Empreinte ${opts.uploadedDoc.hash.slice(0, 16)}…`,
+          isValid: false,
+          verificationStatus: "pending",
+          verificationFee: UNKNOWN_FEE,
+        };
+        setDiploma(pseudo);
+        setDiplomaRow(null);
+        setStep("payment");
+        await stopScanner();
+        toast.info("Document accepté", { description: "Procédez au paiement pour lancer la vérification officielle." });
       } else {
+        toast.error("Diplôme introuvable", { description: "Aucune correspondance dans la base officielle." });
         setTimeout(() => { isProcessingRef.current = false; }, 1500);
       }
+
+      void insertedId;
     },
     [user, role, stopScanner]
   );
 
-  // Camera scanner
+  // Auto-cleanup camera on step/mode change
   useEffect(() => {
-    if (step !== "scan" || mode !== "camera") return;
-
-    const start = async () => {
-      try {
-        const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID);
-        scannerRef.current = scanner;
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 },
-          (decoded) => {
-            if (!isProcessingRef.current) lookupDiploma(decoded, "qr");
-          },
-          () => {}
-        );
-      } catch (err) {
-        console.error("Camera error:", err);
-        toast.error("Caméra inaccessible", {
-          description: "Utilisez la saisie manuelle.",
-        });
-        setMode("manual");
-      }
-    };
-    start();
-
-    return () => {
+    if (step !== "scan" || mode !== "camera") {
       stopScanner();
-    };
-  }, [step, mode, lookupDiploma, stopScanner]);
+    }
+  }, [step, mode, stopScanner]);
+
+  useEffect(() => () => { stopScanner(); }, [stopScanner]);
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,17 +197,16 @@ export default function Scanner() {
     setDiploma(null);
     setDiplomaRow(null);
     setVerificationId(null);
+    setUploaded(null);
     setStep("scan");
     isProcessingRef.current = false;
   };
-
-  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const handlePaymentComplete = async () => {
     if (verificationId) {
       supabase.from("verifications").update({ paid: true, payment_method: "mobile_money" }).eq("id", verificationId).then(() => {});
     }
-    setStep("certified");
+    setStep(uploaded && !diplomaRow ? "fake" : "certified");
   };
 
   const handleDownloadCertified = async () => {
@@ -212,8 +259,32 @@ export default function Scanner() {
     }
   };
 
+  const handleDownloadFake = async () => {
+    if (!uploaded || generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: verifierProfile } = await supabase
+        .from("profiles").select("full_name").eq("id", authUser?.id ?? "").maybeSingle();
+      const out = await stampFakePdf(uploaded.bytes, {
+        verifier_name: verifierProfile?.full_name ?? "Vérificateur CDAS",
+        verifier_email: authUser?.email ?? null,
+        verified_at: new Date().toISOString(),
+        transaction_id: verificationId ?? "cdas",
+        file_hash: uploaded.hash,
+      }, uploaded.name);
+      downloadPdf(out, `NON_AUTHENTIFIE_${uploaded.name.replace(/\.pdf$/i, "")}.pdf`);
+      toast.success("Document tamponné", { description: "Cachet FAUX / NON AUTHENTIFIÉ appliqué." });
+    } catch (e) {
+      console.error(e);
+      toast.error("Impossible d'appliquer le cachet");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const handleBack = () => {
-    if (step === "payment") setStep("result");
+    if (step === "payment") setStep(uploaded ? "scan" : "result");
     else navigate(-1);
   };
 
@@ -267,11 +338,27 @@ export default function Scanner() {
               <div className="flex-1 flex flex-col items-center justify-start p-4">
                 <div className="relative w-full max-w-xs aspect-square rounded-2xl overflow-hidden bg-black">
                   <div id={SCANNER_ELEMENT_ID} className="w-full h-full [&_video]:object-cover [&_video]:w-full [&_video]:h-full" />
-                  <div className="pointer-events-none absolute inset-6 border-2 border-info rounded-xl" />
+                  {!cameraOn && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
+                      <Camera className="w-10 h-10 text-white/70" />
+                      <p className="text-xs text-white/80">
+                        {cameraError ?? "La caméra doit être activée manuellement."}
+                      </p>
+                      <Button size="sm" onClick={startCamera} className="bg-primary text-primary-foreground">
+                        <RefreshCw className="w-4 h-4 mr-1" /> Activer la caméra
+                      </Button>
+                    </div>
+                  )}
+                  {cameraOn && <div className="pointer-events-none absolute inset-6 border-2 border-info rounded-xl" />}
                 </div>
                 <p className="text-sm text-muted-foreground mt-4 text-center">
-                  {searching ? "Analyse en cours..." : "Cadrez le QR code du diplôme"}
+                  {searching ? "Analyse en cours..." : cameraOn ? "Cadrez le QR code du diplôme" : "Cliquez sur « Activer la caméra »."}
                 </p>
+                {cameraError && cameraOn === false && (
+                  <div className="mt-3 mx-2 text-[11px] text-muted-foreground bg-warning/10 border border-warning/30 rounded-lg p-2">
+                    Astuce : si vous êtes dans l'aperçu Lovable, ouvrez l'app dans un nouvel onglet — les iframes bloquent souvent la caméra.
+                  </div>
+                )}
               </div>
             )}
 
@@ -301,23 +388,26 @@ export default function Scanner() {
               <div className="flex-1 flex flex-col p-4 gap-4">
                 <div className="border-2 border-dashed border-primary/30 rounded-2xl p-6 text-center bg-primary/5">
                   <FileUp className="w-10 h-10 text-primary mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-foreground mb-1">Téléverser un PDF</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">Téléverser un document</p>
                   <p className="text-xs text-muted-foreground mb-4">
-                    Le fichier est haché (SHA-256) puis comparé au registre CDAS.
+                    Tout PDF est accepté. Le système calcule l'empreinte SHA-256 puis interroge le registre CDAS.
                   </p>
                   <label className="inline-block">
-                    <input type="file" accept="application/pdf" className="hidden"
+                    <input type="file" accept="application/pdf,application/octet-stream,*/*" className="hidden"
                       disabled={searching}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setSearching(true);
                         try {
+                          const bytes = await file.arrayBuffer();
                           const hash = await sha256File(file);
                           toast.info("Empreinte calculée", { description: hash.slice(0, 24) + "..." });
-                          await lookupDiploma(hash, "pdf_hash");
+                          await lookupDiploma(hash, "pdf_hash", {
+                            uploadedDoc: { bytes, name: file.name, hash },
+                          });
                         } catch (err) {
-                          toast.error("Impossible de hacher le fichier");
+                          toast.error("Impossible de lire le fichier");
                           setSearching(false);
                         }
                         e.target.value = "";
@@ -331,7 +421,7 @@ export default function Scanner() {
                   <p className="font-semibold text-foreground mb-1">Comment ça marche ?</p>
                   1. On calcule l'empreinte SHA-256 du PDF.<br />
                   2. On l'interroge dans le registre blockchain CDAS.<br />
-                  3. Si l'empreinte correspond, le diplôme est authentique.
+                  3. Si l'empreinte ne correspond pas, le document est marqué <b>NON AUTHENTIFIÉ</b> après paiement.
                 </div>
               </div>
             )}
@@ -385,6 +475,45 @@ export default function Scanner() {
                 <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Génération du certificat...</>
               ) : (
                 <><Download className="w-5 h-5 mr-2" /> Télécharger le diplôme certifié</>
+              )}
+            </Button>
+
+            <Button variant="outline" onClick={handleNewScan} className="h-12 rounded-xl">
+              Nouvelle vérification
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/history")} className="h-11">
+              Voir l'historique
+            </Button>
+          </div>
+        )}
+
+        {step === "fake" && uploaded && (
+          <div className="flex-1 flex flex-col p-4 gap-4">
+            <div className="rounded-2xl bg-destructive/10 border border-destructive/30 p-5 text-center">
+              <div className="w-16 h-16 rounded-full bg-destructive text-white mx-auto flex items-center justify-center mb-3">
+                <AlertTriangle className="w-9 h-9" />
+              </div>
+              <h3 className="font-bold text-lg text-destructive">Diplôme introuvable</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Aucune correspondance dans le registre officiel CDAS. Ce document est présumé <b>NON AUTHENTIFIÉ</b>.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-4">
+              <p className="text-xs text-muted-foreground">Fichier soumis</p>
+              <p className="text-sm font-semibold text-foreground truncate">{uploaded.name}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 break-all">SHA-256 : {uploaded.hash.slice(0, 48)}…</p>
+            </div>
+
+            <Button
+              onClick={handleDownloadFake}
+              disabled={generatingPdf}
+              className="h-14 bg-destructive text-destructive-foreground font-semibold rounded-xl text-base"
+            >
+              {generatingPdf ? (
+                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Application du cachet…</>
+              ) : (
+                <><Download className="w-5 h-5 mr-2" /> Télécharger le document avec cachet FAUX</>
               )}
             </Button>
 
