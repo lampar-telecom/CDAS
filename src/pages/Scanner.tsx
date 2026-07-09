@@ -352,6 +352,50 @@ export default function Scanner() {
         {step === "payment" && diploma && (
           <PaymentFlow diploma={diploma} onBack={handleBack} onPaymentComplete={handlePaymentComplete} />
         )}
+
+        {step === "certified" && diploma && (
+          <div className="flex-1 flex flex-col p-4 gap-4">
+            <div className="rounded-2xl bg-success/10 border border-success/30 p-5 text-center">
+              <div className="w-16 h-16 rounded-full bg-success text-white mx-auto flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-9 h-9" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground">Paiement confirmé</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Diplôme authentifié. Vous pouvez maintenant télécharger le PDF certifié avec cachet <b>VÉRIFIÉ · CDAS</b>.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <BadgeCheck className="w-6 h-6 text-success" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">{diploma.holder}</p>
+                  <p className="text-xs text-muted-foreground">{diploma.type} · {diploma.year}</p>
+                  <p className="text-xs text-muted-foreground">Réf : {diploma.id}</p>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleDownloadCertified}
+              disabled={generatingPdf}
+              className="h-14 bg-primary text-primary-foreground font-semibold rounded-xl text-base"
+            >
+              {generatingPdf ? (
+                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Génération du certificat...</>
+              ) : (
+                <><Download className="w-5 h-5 mr-2" /> Télécharger le diplôme certifié</>
+              )}
+            </Button>
+
+            <Button variant="outline" onClick={handleNewScan} className="h-12 rounded-xl">
+              Nouvelle vérification
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/history")} className="h-11">
+              Voir l'historique
+            </Button>
+          </div>
+        )}
       </div>
     </MobileLayout>
   );
