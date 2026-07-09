@@ -116,7 +116,7 @@ export default function Scanner() {
         scannerRef.current = scanner;
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
+          { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 },
           (decoded) => {
             if (!isProcessingRef.current) lookupDiploma(decoded, "qr");
           },
