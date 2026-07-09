@@ -346,7 +346,7 @@ export async function buildAttestationPdf(
   doc.text(data.director_name ?? "Pr. Jacques ETAME", pw - 42, y + 52, { align: "center" });
 
   // QR (bottom-left)
-  const qrDataUrl = await generateQrDataUrl(data.qr_token, 400);
+  const qrDataUrl = await generateQrDataUrl(data.qr_token, 220);
   doc.addImage(qrDataUrl, "PNG", 18, y + 18, 32, 32);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
