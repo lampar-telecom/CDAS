@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { sha256File } from "@/lib/crypto";
 import { buildAttestationPdf, downloadPdf } from "@/lib/pdf";
 
-type Step = "scan" | "result" | "payment";
+type Step = "scan" | "result" | "payment" | "certified";
 type Mode = "camera" | "manual" | "upload";
 
 const SCANNER_ELEMENT_ID = "cdas-qr-reader";
