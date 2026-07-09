@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { Shield, X, Search, Camera, Keyboard, FileUp, Loader2 } from "lucide-react";
+import { Shield, X, Search, Camera, Keyboard, FileUp, Loader2, Download, CheckCircle2, BadgeCheck } from "lucide-react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { DiplomaResult, DiplomaData } from "@/components/scanner/DiplomaResult";
 import { PaymentFlow } from "@/components/scanner/PaymentFlow";
