@@ -153,57 +153,63 @@ export default function Scanner() {
     isProcessingRef.current = false;
   };
 
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
   const handlePaymentComplete = async () => {
     if (verificationId) {
-      await supabase.from("verifications").update({ paid: true, payment_method: "mobile_money" }).eq("id", verificationId);
+      supabase.from("verifications").update({ paid: true, payment_method: "mobile_money" }).eq("id", verificationId).then(() => {});
     }
-    // Generate certified PDF for the verifier
+    setStep("certified");
+  };
+
+  const handleDownloadCertified = async () => {
+    if (!diplomaRow || generatingPdf) return;
+    setGeneratingPdf(true);
     try {
-      if (diplomaRow) {
-        const d = diplomaRow;
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const { data: verifierProfile } = await supabase
-          .from("profiles").select("full_name").eq("id", authUser?.id ?? "").maybeSingle();
-        const pdfBuf = await buildAttestationPdf(
-          {
-            attestation_number: d.attestation_number ?? d.qr_token?.slice(0, 12) ?? "",
-            reference: d.reference,
-            sub_reference: d.sub_reference,
-            qr_token: d.qr_token,
-            holder_name: d.holder_name,
-            sexe: d.sexe,
-            matricule: d.matricule,
-            birth_date: d.birth_date,
-            birth_place: d.birth_place,
-            diploma_type: d.diploma_type,
-            specialization: d.specialization,
-            institution: d.institution,
-            year: d.year,
-            mention: d.mention,
-            grade_letter: d.grade_letter,
-            credits: d.credits,
-            jury_session: d.jury_session,
-            director_name: d.director_name,
-            issued_at: d.validated_at ?? d.created_at,
-            pdf_hash: d.pdf_hash ?? "",
-          },
-          {
-            verifier_name: verifierProfile?.full_name ?? "Vérificateur CDAS",
-            verifier_email: authUser?.email ?? null,
-            verified_at: new Date().toISOString(),
-            transaction_id: verificationId ?? "cdas",
-            amount: d.verification_fee ?? 10000,
-            pdf_hash: d.pdf_hash ?? "",
-          }
-        );
-        downloadPdf(pdfBuf, `certificat_${d.reference}.pdf`);
-        toast.success("Certificat téléchargé", { description: "PDF certifié CDAS avec cachet officiel." });
-      }
+      const d = diplomaRow;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: verifierProfile } = await supabase
+        .from("profiles").select("full_name").eq("id", authUser?.id ?? "").maybeSingle();
+      const pdfBuf = await buildAttestationPdf(
+        {
+          attestation_number: d.attestation_number ?? d.qr_token?.slice(0, 12) ?? "",
+          reference: d.reference,
+          sub_reference: d.sub_reference,
+          qr_token: d.qr_token,
+          holder_name: d.holder_name,
+          sexe: d.sexe,
+          matricule: d.matricule,
+          birth_date: d.birth_date,
+          birth_place: d.birth_place,
+          diploma_type: d.diploma_type,
+          specialization: d.specialization,
+          institution: d.institution,
+          year: d.year,
+          mention: d.mention,
+          grade_letter: d.grade_letter,
+          credits: d.credits,
+          jury_session: d.jury_session,
+          director_name: d.director_name,
+          issued_at: d.validated_at ?? d.created_at,
+          pdf_hash: d.pdf_hash ?? "",
+        },
+        {
+          verifier_name: verifierProfile?.full_name ?? "Vérificateur CDAS",
+          verifier_email: authUser?.email ?? null,
+          verified_at: new Date().toISOString(),
+          transaction_id: verificationId ?? "cdas",
+          amount: d.verification_fee ?? 10000,
+          pdf_hash: d.pdf_hash ?? "",
+        }
+      );
+      downloadPdf(pdfBuf, `certificat_${d.reference}.pdf`);
+      toast.success("Certificat téléchargé", { description: "Diplôme avec cachet VÉRIFIÉ · CDAS." });
     } catch (e) {
       console.error(e);
       toast.error("Impossible de générer le certificat");
+    } finally {
+      setGeneratingPdf(false);
     }
-    navigate("/history");
   };
 
   const handleBack = () => {
