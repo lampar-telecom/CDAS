@@ -354,11 +354,6 @@ export default function Scanner() {
                 <p className="text-sm text-muted-foreground mt-4 text-center">
                   {searching ? "Analyse en cours..." : cameraOn ? "Cadrez le QR code du diplôme" : "Cliquez sur « Activer la caméra »."}
                 </p>
-                {cameraError && cameraOn === false && (
-                  <div className="mt-3 mx-2 text-[11px] text-muted-foreground bg-warning/10 border border-warning/30 rounded-lg p-2">
-                    Astuce : si vous êtes dans l'aperçu Lovable, ouvrez l'app dans un nouvel onglet — les iframes bloquent souvent la caméra.
-                  </div>
-                )}
               </div>
             )}
 
